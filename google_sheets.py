@@ -1,12 +1,16 @@
+import json
+import os
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
 def connect_to_sheets(sheet_name):
-    """เชื่อมต่อกับ Google Sheets พร้อมการจัดการข้อผิดพลาด"""
+    """เชื่อมต่อกับ Google Sheets โดยใช้ Environment Variable"""
     try:
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
-                 "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+        # โหลดข้อมูล Credentials จาก Environment Variable
+        credentials_info = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
+        creds = Credentials.from_service_account_info(credentials_info)
+        
+        # ใช้งาน gspread กับข้อมูล Credentials
         client = gspread.authorize(creds)
         return client.open(sheet_name).sheet1
     except Exception as e:
@@ -31,3 +35,10 @@ def update_display_name(sheet, discord_id, new_display_name):
                 break
     except Exception as e:
         print(f"Error updating display name: {e}")
+
+
+sheet = connect_to_sheets("EnvyunfairDatabase")
+if sheet:
+    print("Successfully connected to the Google Sheet!")
+else:
+    print("Connection failed.")
