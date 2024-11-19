@@ -10,6 +10,24 @@ import json
 from google_sheets import connect_to_sheets, update_sheet, update_display_name
 from utils import validate_roblox_url, fetch_roblox_data
 
+raw_credentials = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+if raw_credentials is None:
+    raise EnvironmentError("GOOGLE_SHEETS_CREDENTIALS environment variable is not set")
+try:
+    credentials_info = json.loads(raw_credentials)
+except json.JSONDecodeError as e:
+    raise ValueError(f"Invalid JSON format in GOOGLE_SHEETS_CREDENTIALS: {e}")
+
+credentials = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+if not credentials:
+    raise ValueError("Environment variable 'GOOGLE_SHEETS_CREDENTIALS' is not set.")
+try:
+    credentials_info = json.loads(credentials)
+    print("Loaded credentials successfully")
+except Exception as e:
+    raise ValueError(f"Failed to parse GOOGLE_SHEETS_CREDENTIALS: {e}")
+
+
 # ตั้งค่าระดับ logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -26,6 +44,7 @@ try:
 except Exception as e:
     logging.error(f"ไม่สามารถโหลด Google Sheets Credentials: {e}")
     credentials_info = None
+
 
 # เชื่อมต่อกับ Google Sheets
 sheet = connect_to_sheets("EnvyunfairDatabase", credentials=credentials_info)  # แก้ชื่อ Sheet ให้ตรงกับความจริง
