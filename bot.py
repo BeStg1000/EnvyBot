@@ -6,6 +6,7 @@ from myserver import server_on
 from dotenv import load_dotenv
 import logging
 import os
+import json
 from google_sheets import connect_to_sheets, update_sheet, update_display_name
 from utils import validate_roblox_url, fetch_roblox_data
 
@@ -17,12 +18,22 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 YOUR_GUILD_ID = os.getenv("DISCORD_GUILD_ID")  # อาจเป็น None
 
+# โหลด Google Sheets Credentials จาก Secret Files
+GOOGLE_SHEETS_CREDENTIALS_PATH = "/etc/secrets/GOOGLE_SHEETS_CREDENTIALS"  # Path ของ Secret File
+try:
+    with open(GOOGLE_SHEETS_CREDENTIALS_PATH, "r") as file:
+        credentials_info = json.load(file)
+except Exception as e:
+    logging.error(f"ไม่สามารถโหลด Google Sheets Credentials: {e}")
+    credentials_info = None
+
+# เชื่อมต่อกับ Google Sheets
+sheet = connect_to_sheets("EnvyunfairDatabase", credentials=credentials_info)  # แก้ชื่อ Sheet ให้ตรงกับความจริง
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 bot = commands.Bot(command_prefix='/', intents=intents)
-
-sheet = connect_to_sheets("EnvyunfairDatabase")  # แก้ชื่อ Sheet ให้ตรงกับความจริง
 
 @bot.command()
 async def link(ctx, member: discord.Member, roblox_url: str):
