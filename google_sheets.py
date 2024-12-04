@@ -32,11 +32,11 @@ def connect_to_sheets(sheet_name):
     try:
         client = gspread.authorize(credentials)
         sheet = client.open(sheet_name).sheet1
-        logging.info("Successfully connected to the Google Sheet!")
+        logging.info(f"Successfully connected to the Google Sheet: {sheet_name}")
         return sheet
     except Exception as e:
         logging.error(f"Error connecting to Google Sheets: {e}")
-        return None
+        raise
 
 def update_sheet(sheet, discord_id, roblox_id, username, display_name, custom_name):
     """อัปเดตข้อมูลใน Google Sheets พร้อมจัดการข้อผิดพลาด"""

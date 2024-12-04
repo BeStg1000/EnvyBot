@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 from google_sheets import connect_to_sheets, update_sheet, update_display_name
 from utils import validate_roblox_url, fetch_roblox_data
 from myserver import server_on
+import asyncio
 
 # ตั้งค่าระดับ logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -30,7 +31,7 @@ except Exception as e:
 
 # เชื่อมต่อกับ Google Sheets
 try:
-    sheet = connect_to_sheets("EnvyunfairDatabase", credentials=credentials_info)
+    sheet = connect_to_sheets("EnvyunfairDatabase")  # ไม่ต้องส่ง `credentials`
     logging.info("Connected to Google Sheets successfully.")
 except Exception as e:
     logging.error(f"Failed to connect to Google Sheets: {e}")
@@ -58,7 +59,7 @@ async def link(ctx, member: discord.Member, roblox_url: str):
 
         try:
             await member.edit(nick=f"{roblox_username}[{display_name}]")
-            update_sheet(sheet, member.id, user_id, roblox_username, display_name)
+            update_sheet(sheet, member.id, user_id, roblox_username, display_name, roblox_username)
             await ctx.send(f"เชื่อมต่อ {member.mention} กับ Roblox สำเร็จ!")
             logging.info(f"Linked {member.name} (Discord ID: {member.id}) to Roblox {roblox_username}.")
         except discord.errors.Forbidden:
@@ -119,6 +120,9 @@ async def before_update():
     await bot.wait_until_ready()
 
 if __name__ == "__main__":
-    update_display_names.start()
-    server_on()
-    bot.run(TOKEN)
+    async def main():
+        update_display_names.start()  # เริ่ม Task Loop
+        server_on()  # เปิด HTTP Server
+        await bot.start(TOKEN)  # ใช้ `bot.start` แทน `bot.run`
+
+    asyncio.run(main())
