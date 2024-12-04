@@ -7,7 +7,6 @@ from google_sheets import connect_to_sheets, update_sheet, update_display_name
 from utils import validate_roblox_url, fetch_roblox_data
 from myserver import server_on
 
-
 # ตั้งค่าระดับ logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -15,17 +14,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 TOKEN = os.getenv("DISCORD_TOKEN")
 YOUR_GUILD_ID = os.getenv("DISCORD_GUILD_ID")
 
-# โหลด Google Sheets Credentials
+# โหลด Google Sheets Credentials จาก Secret File
+SECRET_FILE_PATH = "/etc/secrets/google_sheets.json"  # Path นี้เป็นค่าเริ่มต้นใน Render.com
+if not os.path.exists(SECRET_FILE_PATH):
+    raise FileNotFoundError("Google Sheets credential file not found at /etc/secrets/google_sheets.json")
 
-raw_credentials = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
-if not raw_credentials:
-    raise EnvironmentError("Environment variable 'GOOGLE_SHEETS_CREDENTIALS' is not set.")
-
-try:
-    credentials_info = json.loads(raw_credentials)
-    logging.info("Loaded Google Sheets credentials successfully.")
-except json.JSONDecodeError as e:
-    raise ValueError(f"Invalid JSON format in GOOGLE_SHEETS_CREDENTIALS: {e}")
+with open(SECRET_FILE_PATH, "r") as file:
+    try:
+        credentials_info = json.load(file)
+        logging.info("Loaded Google Sheets credentials from Secret File successfully.")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format in Google Sheets credentials file: {e}")
 
 # เชื่อมต่อกับ Google Sheets
 try:
@@ -34,9 +33,6 @@ try:
 except Exception as e:
     logging.error(f"Failed to connect to Google Sheets: {e}")
     sheet = None
-
-# ... ส่วนที่เหลือเหมือนเดิม ...
-
 
 # ตั้งค่า Discord Bot
 intents = discord.Intents.default()
