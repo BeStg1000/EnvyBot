@@ -8,7 +8,7 @@ from google.oauth2.service_account import Credentials
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # กำหนดตำแหน่งของ Secret File
-GOOGLE_CREDENTIALS_PATH = "/etc/secrets/GOOGLE_SHEETS_CREDENTIALS"
+GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_SHEETS_CREDENTIALS", "/etc/secrets/GOOGLE_SHEETS_CREDENTIALS")
 
 # ตรวจสอบและโหลด Google Sheets Credentials จาก Secret File
 if not os.path.exists(GOOGLE_CREDENTIALS_PATH):

@@ -15,16 +15,18 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 YOUR_GUILD_ID = os.getenv("DISCORD_GUILD_ID")
 
 # โหลด Google Sheets Credentials จาก Secret File
-SECRET_FILE_PATH = "/etc/secrets/google_sheets.json"  # Path นี้เป็นค่าเริ่มต้นใน Render.com
+SECRET_FILE_PATH = os.getenv("GOOGLE_SHEETS_CREDENTIALS", "/etc/secrets/GOOGLE_SHEETS_CREDENTIALS")
 if not os.path.exists(SECRET_FILE_PATH):
-    raise FileNotFoundError("Google Sheets credential file not found at /etc/secrets/google_sheets.json")
+    raise FileNotFoundError(f"Google Sheets credential file not found at {SECRET_FILE_PATH}")
 
-with open(SECRET_FILE_PATH, "r") as file:
-    try:
+try:
+    with open(SECRET_FILE_PATH, "r") as file:
         credentials_info = json.load(file)
-        logging.info("Loaded Google Sheets credentials from Secret File successfully.")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON format in Google Sheets credentials file: {e}")
+        logging.info("Loaded Google Sheets credentials from secret file successfully.")
+except json.JSONDecodeError as e:
+    raise ValueError(f"Invalid JSON format in Google Sheets credentials file: {e}")
+except Exception as e:
+    raise RuntimeError(f"Unexpected error loading credentials file: {e}")
 
 # เชื่อมต่อกับ Google Sheets
 try:
