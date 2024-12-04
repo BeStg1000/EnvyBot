@@ -1,55 +1,41 @@
-import json
 import os
-import logging
-import gspread
-from google.oauth2.service_account import Credentials
+import discord
+from discord.ext import commands
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
-# ตั้งค่าระดับของ logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# ตั้งค่าการใช้งาน Discord
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix='!', intents=intents)
 
-# แปลง JSON String ที่อยู่ใน Environment Variable เป็น Python Dictionary
-credentials_info = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
+# ตั้งค่า Google Sheets API
+SERVICE_ACCOUNT_FILE = 'path/to/your/service_account.json'  # เปลี่ยนเป็น path ที่ถูกต้อง
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# โหลด Credential
-credentials = Credentials.from_service_account_info(
-    credentials_info,
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
-)
+credentials = service_account.Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-def connect_to_sheets(sheet_name):
-    """เชื่อมต่อกับ Google Sheets โดยใช้ Environment Variable"""
-    try:
-        client = gspread.authorize(credentials)
-        sheet = client.open(sheet_name).sheet1
-        logging.info("Successfully connected to the Google Sheet!")
-        return sheet
-    except Exception as e:
-        logging.error(f"Error connecting to Google Sheets: {e}")
-        return None
+# สร้างตัวเชื่อมต่อกับ Google Sheets API
+service = build('sheets', 'v4', credentials=credentials)
+spreadsheet_id = 'your_spreadsheet_id'  # เปลี่ยนเป็น ID ของ Google Sheets ของคุณ
 
-def update_sheet(sheet, discord_id, roblox_id, username, display_name, custom_name):
-    """อัปเดตข้อมูลใน Google Sheets พร้อมจัดการข้อผิดพลาด"""
-    try:
-        data = [discord_id, roblox_id, username, display_name, custom_name]
-        sheet.append_row(data)
-        logging.info(f"Successfully updated sheet with data: {data}")
-    except Exception as e:
-        logging.error(f"Error updating Google Sheets: {e}")
+@bot.command()
+async def update_sheet(ctx, data):
+    """Update Google Sheets with data from Discord."""
+    values = [
+        [data]  # ข้อมูลที่จะเขียนลง Google Sheets
+    ]
+    body = {
+        'values': values
+    }
+    service.spreadsheets().values().append(
+        spreadsheetId=spreadsheet_id,
+        range='Sheet1!A1',  # เปลี่ยนเป็นช่วงที่ต้องการเขียน
+        valueInputOption='RAW',
+        body=body
+    ).execute()
+    
+    await ctx.send('Updated the sheet!')
 
-def update_display_name(sheet, discord_id, new_display_name):
-    """อัปเดต Display Name ใน Google Sheets"""
-    try:
-        records = sheet.get_all_records()
-        if not records:
-            logging.warning("Google Sheet is empty. Please add the required columns.")
-            return
-
-        for i, record in enumerate(records, start=2):
-            if record.get('Discord ID') == discord_id:
-                sheet.update_cell(i, 4, new_display_name)
-                logging.info(f"Updated display name for Discord ID {discord_id} to {new_display_name}")
-                break
-        else:
-            logging.warning(f"Discord ID {discord_id} not found in the sheet.")
-    except Exception as e:
-        logging.error(f"Error updating display name: {e}")
+# เริ่มบอท
+bot.run(os.getenv('TOKEN'))
